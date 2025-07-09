@@ -10,6 +10,11 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
+    
+    <!-- AdSense Monetization Script -->
+    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2695932393157065"
+     crossorigin="anonymous"></script>
+
     <style>
         body {
             font-family: 'Inter', sans-serif;
@@ -190,10 +195,8 @@
         });
         fileUpload.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
         
-        // REVISED: Event listener for URL input
         imageUrlInput.addEventListener('input', () => {
             if (imageUrlInput.value.trim() !== '') {
-                // If user types in URL, clear the file input state
                 clearFileState();
                 updateProcessButtonState(true);
             } else {
@@ -221,7 +224,6 @@
             }
         }
         
-        // REVISED: Function to specifically clear file-related state
         function clearFileState() {
             currentFile = null;
             fileUpload.value = '';
@@ -230,7 +232,6 @@
             imageUrlInput.disabled = false;
         }
 
-        // REVISED: Function to specifically clear URL-related state
         function clearUrlState() {
             imageUrlInput.value = '';
             fileUpload.disabled = false;
@@ -245,7 +246,6 @@
                 updateProcessButtonState(false);
                 return;
             }
-            // Clear the other input's state
             clearUrlState();
 
             currentFile = file;
@@ -268,13 +268,10 @@
                 jsonOutputEl.innerHTML = '<span class="text-violet-500">Processing...</span>';
                 copyBtn.disabled = true;
             } else {
-                // REVISED: Reset UI state for next operation
                 btnTextContainer.querySelector('svg')?.classList.remove('hidden');
                 btnTextSpan.classList.remove('hidden');
                 btnLoader.classList.add('hidden');
-                // Don't re-enable the button immediately, let the user decide the next input
                 updateProcessButtonState(false);
-                // Fully reset inputs to allow a new, clean operation
                 clearFileState();
                 clearUrlState();
             }
