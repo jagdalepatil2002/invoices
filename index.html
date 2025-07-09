@@ -3,17 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>DataLens - Neon Noir (Final)</title>
+    <title>DataLens - All-in-One Document Tool</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&family=Fira+Code:wght@400;700&display=swap" rel="stylesheet">
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
     <script src='https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js'></script>
-    
-    <!-- AdSense Monetization Script -->
-    <script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-2695932393157065"
-     crossorigin="anonymous"></script>
+    <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
 
     <style>
         body {
@@ -71,18 +68,13 @@
         .file-uploaded .upload-prompt { display: none; }
         
         .checkmark__circle {
-            stroke-dasharray: 166;
-            stroke-dashoffset: 166;
-            stroke-width: 2;
-            stroke-miterlimit: 10;
-            stroke: #f472b6;
-            fill: none;
+            stroke-dasharray: 166; stroke-dashoffset: 166; stroke-width: 2; stroke-miterlimit: 10;
+            stroke: #f472b6; fill: none;
             animation: stroke 0.6s cubic-bezier(0.65, 0, 0.45, 1) forwards;
         }
         .checkmark {
             width: 56px; height: 56px; border-radius: 50%; display: block;
-            stroke-width: 2; stroke: #fff; stroke-miterlimit: 10;
-            margin: 10% auto;
+            stroke-width: 2; stroke: #fff; stroke-miterlimit: 10; margin: 10% auto;
             box-shadow: inset 0px 0px 0px #f472b6;
             animation: fill .4s ease-in-out .4s forwards, scale .3s ease-in-out .9s both;
         }
@@ -93,6 +85,22 @@
         @keyframes stroke { 100% { stroke-dashoffset: 0; } }
         @keyframes scale { 0%, 100% { transform: none; } 50% { transform: scale3d(1.1, 1.1, 1); } }
         @keyframes fill { 100% { box-shadow: inset 0px 0px 0px 30px #f472b6; } }
+
+        /* Tab Styles */
+        .tab-button {
+            transition: all 0.3s ease;
+            border-bottom: 3px solid transparent;
+        }
+        .tab-button.active {
+            color: #f472b6;
+            border-bottom-color: #f472b6;
+        }
+        .tab-content {
+            display: none;
+        }
+        .tab-content.active {
+            display: block;
+        }
     </style>
 </head>
 <body class="p-4">
@@ -100,425 +108,570 @@
     <div class="w-full max-w-5xl mx-auto">
         <header class="text-center mb-10">
             <h1 class="text-5xl font-bold text-fuchsia-300">DataLens</h1>
-            <p class="text-lg text-violet-300 mt-2">Intelligently extract structured text from any image or PDF.</p>
+            <p class="text-lg text-violet-300 mt-2">Your All-in-One Document Tool.</p>
         </header>
 
-        <main class="bg-[#2a1a4a]/70 backdrop-blur-sm border border-violet-800 rounded-xl shadow-2xl shadow-fuchsia-500/10 p-6 md:p-8">
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                <!-- Input Section -->
-                <div class="flex flex-col space-y-6">
-                    <div>
-                        <h2 class="flex items-center text-xl font-semibold mb-3 text-fuchsia-300">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
-                           1. Upload a File
-                        </h2>
-                        <div id="dropzone" class="border-2 border-dashed border-violet-700 rounded-lg p-8 text-center cursor-pointer hover:border-fuchsia-500 hover:bg-violet-900/50 transition-all duration-300">
-                            <div class="upload-prompt">
-                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-violet-500 mb-2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
-                                <p>Drag & drop, or <span class="font-semibold text-fuchsia-400">click to browse</span></p>
+        <!-- Tab Navigation -->
+        <div class="mb-8 flex justify-center border-b border-violet-800">
+            <button id="tab-ocr" class="tab-button active text-lg font-semibold py-3 px-6">OCR Extractor</button>
+            <button id="tab-converter" class="tab-button text-lg font-semibold py-3 px-6">Image/PDF Converter</button>
+        </div>
+
+        <!-- OCR Extractor Tab -->
+        <div id="content-ocr" class="tab-content active">
+            <main class="bg-[#2a1a4a]/70 backdrop-blur-sm border border-violet-800 rounded-xl shadow-2xl shadow-fuchsia-500/10 p-6 md:p-8">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Input Section -->
+                    <div class="flex flex-col space-y-6">
+                        <div>
+                            <h2 class="flex items-center text-xl font-semibold mb-3 text-fuchsia-300">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" x2="12" y1="3" y2="15"/></svg>
+                               1. Upload a File
+                            </h2>
+                            <div id="dropzone-ocr" class="dropzone border-2 border-dashed border-violet-700 rounded-lg p-8 text-center cursor-pointer hover:border-fuchsia-500 hover:bg-violet-900/50 transition-all duration-300">
+                                <div class="upload-prompt">
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-violet-500 mb-2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+                                    <p>Drag & drop, or <span class="font-semibold text-fuchsia-400">click to browse</span></p>
+                                </div>
+                                <div class="success-animation">
+                                    <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                                </div>
+                                <p id="fileName-ocr" class="fileName text-fuchsia-400 mt-2 text-sm"></p>
                             </div>
-                            <div class="success-animation">
-                                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
-                            </div>
-                            <p id="fileName" class="text-fuchsia-400 mt-2 text-sm"></p>
+                            <input type="file" id="fileUpload-ocr" class="fileUpload hidden" accept="image/png, image/jpeg, image/webp, image/bmp, application/pdf">
                         </div>
-                        <input type="file" id="fileUpload" class="hidden" accept="image/png, image/jpeg, image/webp, image/bmp, application/pdf">
-                    </div>
 
-                    <div class="flex items-center text-center font-medium text-violet-500">
-                        <hr class="flex-grow border-t border-violet-700"><span class="px-2">OR</span><hr class="flex-grow border-t border-violet-700">
-                    </div>
+                        <div class="flex items-center text-center font-medium text-violet-500">
+                            <hr class="flex-grow border-t border-violet-700"><span class="px-2">OR</span><hr class="flex-grow border-t border-violet-700">
+                        </div>
 
-                    <div>
-                        <h2 class="flex items-center text-xl font-semibold mb-3 text-fuchsia-300">
-                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"/></svg>
-                           2. Provide Image URL
-                        </h2>
-                        <input type="text" id="imageUrl" placeholder="https://example.com/image.png" class="w-full bg-violet-900/50 border border-violet-700 rounded-md p-3 focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 outline-none transition disabled:bg-violet-900/20 disabled:cursor-not-allowed">
-                    </div>
+                        <div>
+                            <h2 class="flex items-center text-xl font-semibold mb-3 text-fuchsia-300">
+                               <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.72"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.72-1.72"/></svg>
+                               2. Provide Image URL
+                            </h2>
+                            <input type="text" id="imageUrl-ocr" placeholder="https://example.com/image.png" class="imageUrl w-full bg-violet-900/50 border border-violet-700 rounded-md p-3 focus:ring-2 focus:ring-fuchsia-500 focus:border-fuchsia-500 outline-none transition disabled:bg-violet-900/20 disabled:cursor-not-allowed">
+                        </div>
 
-                    <button id="processBtn" class="btn-neon w-full flex items-center justify-center font-bold py-3 px-4 rounded-lg" disabled>
-                        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
-                        <span id="btnText">Extract Data</span>
-                        <div id="btnLoader" class="loader w-5 h-5 border-4 rounded-full hidden"></div>
-                    </button>
-                </div>
-
-                <!-- Output Section -->
-                <div class="flex flex-col">
-                    <div class="flex justify-between items-center mb-3">
-                         <h2 class="flex items-center text-xl font-semibold text-fuchsia-300">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
-                            Formatted Data
-                        </h2>
-                        <button id="copyBtn" class="flex items-center bg-violet-800 hover:bg-violet-700 text-violet-300 font-semibold py-2 px-4 rounded-md text-sm transition-colors disabled:opacity-50">
-                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
-                            Copy
+                        <button id="processBtn-ocr" class="processBtn btn-neon w-full flex items-center justify-center font-bold py-3 px-4 rounded-lg" disabled>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><path d="M12 2.69l5.66 5.66a8 8 0 1 1-11.31 0z"/><path d="M12 12a3 3 0 1 0 0-6 3 3 0 0 0 0 6z"/></svg>
+                            <span class="btnText">Extract Data</span>
+                            <div class="loader w-5 h-5 border-4 rounded-full hidden"></div>
                         </button>
                     </div>
-                    <div id="status" class="text-violet-400 mb-2 min-h-[20px] transition-colors"></div>
-                    <div class="bg-black/50 rounded-lg flex-grow min-h-[300px] max-h-[500px] overflow-y-auto border border-violet-800">
-                        <pre id="output"><code id="json-output" class="language-json"><span class="text-violet-500">Formatted output will appear here...</span></code></pre>
+
+                    <!-- Output Section -->
+                    <div class="flex flex-col">
+                        <div class="flex justify-between items-center mb-3">
+                             <h2 class="flex items-center text-xl font-semibold text-fuchsia-300">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+                                Formatted Data
+                            </h2>
+                            <button id="copyBtn-ocr" class="copyBtn flex items-center bg-violet-800 hover:bg-violet-700 text-violet-300 font-semibold py-2 px-4 rounded-md text-sm transition-colors disabled:opacity-50">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg>
+                                Copy
+                            </button>
+                        </div>
+                        <div id="status-ocr" class="status mb-2 min-h-[20px] transition-colors"></div>
+                        <div class="bg-black/50 rounded-lg flex-grow min-h-[300px] max-h-[500px] overflow-y-auto border border-violet-800">
+                            <pre><code id="json-output-ocr" class="json-output language-json"><span class="text-violet-500">Formatted output will appear here...</span></code></pre>
+                        </div>
                     </div>
                 </div>
-            </div>
-        </main>
+            </main>
+        </div>
+
+        <!-- Converter Tab -->
+        <div id="content-converter" class="tab-content">
+             <main class="bg-[#2a1a4a]/70 backdrop-blur-sm border border-violet-800 rounded-xl shadow-2xl shadow-fuchsia-500/10 p-6 md:p-8">
+                 <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                    <!-- Image to PDF -->
+                    <div class="flex flex-col space-y-6">
+                        <h2 class="flex items-center text-xl font-semibold mb-3 text-fuchsia-300">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m10 14-2 2 2 2"/><path d="m14 18 2-2-2-2"/></svg>
+                           Image to PDF
+                        </h2>
+                        <div id="dropzone-img2pdf" class="dropzone border-2 border-dashed border-violet-700 rounded-lg p-8 text-center cursor-pointer hover:border-fuchsia-500 hover:bg-violet-900/50 transition-all duration-300">
+                            <div class="upload-prompt">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-violet-500 mb-2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+                                <p>Upload an Image (PNG, JPG)</p>
+                            </div>
+                             <div class="success-animation">
+                                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                            </div>
+                            <p id="fileName-img2pdf" class="fileName text-fuchsia-400 mt-2 text-sm"></p>
+                        </div>
+                        <input type="file" id="fileUpload-img2pdf" class="fileUpload hidden" accept="image/png, image/jpeg">
+                        <button id="processBtn-img2pdf" class="processBtn btn-neon w-full flex items-center justify-center font-bold py-3 px-4 rounded-lg" disabled>
+                            <span class="btnText">Convert to PDF</span>
+                            <div class="loader w-5 h-5 border-4 rounded-full hidden"></div>
+                        </button>
+                    </div>
+                    
+                    <!-- PDF to Image -->
+                     <div class="flex flex-col space-y-6">
+                        <h2 class="flex items-center text-xl font-semibold mb-3 text-fuchsia-300">
+                           <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="mr-2 text-fuchsia-400"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><path d="m10 14-2 2 2 2"/><path d="m14 18 2-2-2-2"/></svg>
+                           PDF to Image
+                        </h2>
+                        <div id="dropzone-pdf2img" class="dropzone border-2 border-dashed border-violet-700 rounded-lg p-8 text-center cursor-pointer hover:border-fuchsia-500 hover:bg-violet-900/50 transition-all duration-300">
+                            <div class="upload-prompt">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" class="mx-auto text-violet-500 mb-2"><path d="M4 14.899A7 7 0 1 1 15.71 8h1.79a4.5 4.5 0 0 1 2.5 8.242"/><path d="M12 12v9"/><path d="m16 16-4-4-4 4"/></svg>
+                                <p>Upload a PDF</p>
+                            </div>
+                             <div class="success-animation">
+                                <svg class="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52"><circle class="checkmark__circle" cx="26" cy="26" r="25" fill="none"/><path class="checkmark__check" fill="none" d="M14.1 27.2l7.1 7.2 16.7-16.8"/></svg>
+                            </div>
+                            <p id="fileName-pdf2img" class="fileName text-fuchsia-400 mt-2 text-sm"></p>
+                        </div>
+                        <input type="file" id="fileUpload-pdf2img" class="fileUpload hidden" accept="application/pdf">
+                        <button id="processBtn-pdf2img" class="processBtn btn-neon w-full flex items-center justify-center font-bold py-3 px-4 rounded-lg" disabled>
+                            <span class="btnText">Convert to Images</span>
+                            <div class="loader w-5 h-5 border-4 rounded-full hidden"></div>
+                        </button>
+                    </div>
+                 </div>
+                 <div id="status-converter" class="status mt-4 min-h-[20px] transition-colors text-center"></div>
+                 <div id="converter-output" class="mt-4 grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-4"></div>
+            </main>
+        </div>
     </div>
     <script>
-        // --- DOM Elements ---
-        const fileUpload = document.getElementById('fileUpload');
-        const imageUrlInput = document.getElementById('imageUrl');
-        const processBtn = document.getElementById('processBtn');
-        const btnTextContainer = processBtn.querySelector('span').parentElement;
-        const btnTextSpan = document.getElementById('btnText');
-        const btnLoader = document.getElementById('btnLoader');
-        const statusEl = document.getElementById('status');
-        const jsonOutputEl = document.getElementById('json-output');
-        const copyBtn = document.getElementById('copyBtn');
-        const dropzone = document.getElementById('dropzone');
-        const fileNameEl = document.getElementById('fileName');
-
-        let currentFile = null;
-        let processedDataForCopy = [];
-        
-        // Setup PDF.js worker
-        pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js';
-
-        // --- Event Listeners ---
-        dropzone.addEventListener('click', () => fileUpload.click());
-        dropzone.addEventListener('dragover', (e) => { e.preventDefault(); dropzone.classList.add('border-fuchsia-500', 'bg-violet-900/50'); });
-        dropzone.addEventListener('dragleave', () => { dropzone.classList.remove('border-fuchsia-500', 'bg-violet-900/50'); });
-        dropzone.addEventListener('drop', (e) => {
-            e.preventDefault();
-            dropzone.classList.remove('border-fuchsia-500', 'bg-violet-900/50');
-            if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
-        });
-        fileUpload.addEventListener('change', (e) => { if (e.target.files.length) handleFile(e.target.files[0]); });
-        
-        imageUrlInput.addEventListener('input', () => {
-            if (imageUrlInput.value.trim() !== '') {
-                clearFileState();
-                updateProcessButtonState(true);
-            } else {
-                updateProcessButtonState(false);
-            }
+        // --- TABS ---
+        const tabs = document.querySelectorAll('.tab-button');
+        const contents = document.querySelectorAll('.tab-content');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                tabs.forEach(item => item.classList.remove('active'));
+                contents.forEach(item => item.classList.remove('active'));
+                tab.classList.add('active');
+                document.getElementById(`content-${tab.id.split('-')[1]}`).classList.add('active');
+            });
         });
 
-        processBtn.addEventListener('click', processInput);
-        copyBtn.addEventListener('click', copyToClipboard);
-
-        document.addEventListener('keydown', function(event) {
-            if (event.key === 'Enter' && !processBtn.disabled) {
-                event.preventDefault();
-                processInput();
-            }
-        });
-
-        // --- Core Functions ---
-        function updateProcessButtonState(isReady) {
-            processBtn.disabled = !isReady;
-            if (isReady) {
-                processBtn.classList.add('ready-to-process');
-            } else {
-                processBtn.classList.remove('ready-to-process');
-            }
-        }
-        
-        function clearFileState() {
-            currentFile = null;
-            fileUpload.value = '';
-            fileNameEl.textContent = '';
-            dropzone.classList.remove('file-uploaded');
-            imageUrlInput.disabled = false;
-        }
-
-        function clearUrlState() {
-            imageUrlInput.value = '';
-            fileUpload.disabled = false;
-        }
-        
-        function handleFile(file) {
-            if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
-                fileNameEl.textContent = "Invalid file type. Please select an Image or PDF.";
-                fileNameEl.classList.add('text-red-400');
-                fileNameEl.classList.remove('text-fuchsia-400');
-                currentFile = null;
-                updateProcessButtonState(false);
-                return;
-            }
-            clearUrlState();
-
-            currentFile = file;
-            fileNameEl.textContent = file.name;
-            fileNameEl.classList.remove('text-red-400');
-            fileNameEl.classList.add('text-fuchsia-400');
-            imageUrlInput.disabled = true;
-            dropzone.classList.add('file-uploaded');
-            updateProcessButtonState(true);
-        }
-
-        function setLoading(isLoading) {
-            processBtn.disabled = isLoading;
-            if (isLoading) {
-                processBtn.classList.remove('ready-to-process');
-                btnTextContainer.querySelector('svg')?.classList.add('hidden');
-                btnTextSpan.classList.add('hidden');
-                btnLoader.classList.remove('hidden');
-                statusEl.textContent = 'Initializing...';
-                jsonOutputEl.innerHTML = '<span class="text-violet-500">Processing...</span>';
-                copyBtn.disabled = true;
-            } else {
-                btnTextContainer.querySelector('svg')?.classList.remove('hidden');
-                btnTextSpan.classList.remove('hidden');
-                btnLoader.classList.add('hidden');
-                updateProcessButtonState(false);
-                clearFileState();
-                clearUrlState();
-            }
-        }
-        
-        function formatExtractedData(text) {
-            const data = {};
+        // --- OCR TOOL ---
+        const ocrTool = {
+            fileUpload: document.getElementById('fileUpload-ocr'),
+            imageUrlInput: document.getElementById('imageUrl-ocr'),
+            processBtn: document.getElementById('processBtn-ocr'),
+            statusEl: document.getElementById('status-ocr'),
+            jsonOutputEl: document.getElementById('json-output-ocr'),
+            copyBtn: document.getElementById('copyBtn-ocr'),
+            dropzone: document.getElementById('dropzone-ocr'),
+            fileNameEl: document.getElementById('fileName-ocr'),
+            currentFile: null,
+            processedDataForCopy: [],
             
-            let cleanedText = text.replace(/(\w)you(\w)/g, '$1 you $2');
-            cleanedText = cleanedText.replace(/Failure-to-?file/gi, 'Failure-to-file');
-            cleanedText = cleanedText.replace(/Failure-to-?pay/gi, 'Failure-to-pay');
-            cleanedText = cleanedText.replace(/[~_]+/g, '');
-            
-            let remainingText = cleanedText;
-
-            const noticeDetails = {};
-            const noticeRules = [
-                { key: 'Notice Identifier', regex: /Notice\s+(CP\w+)/i },
-                { key: 'Tax Year', regex: /Tax year\s+(\d{4})/i },
-                { key: 'Notice Date', regex: /Notice date\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})/i },
-                { key: 'Social Security Number', regex: /Social security number\s+([n\d-]+)/i },
-                { key: 'Contact Phone', regex: /To contact us\s+([\d-]+(?:\s+EXT\.\s+\w+)?)/i },
-                { key: 'Caller ID', regex: /Your caller ID\s+([a-z0-9]+)/i },
-                { key: 'Page', regex: /Page\s+(\d+\s+of\s+\d+)/i },
-                { key: 'Notice Identifier', regex: /Notice identifier\s+([A-Z0-9]+)/i },
-            ];
-            
-            noticeRules.forEach(rule => {
-                if (!noticeDetails[rule.key]) {
+            init() {
+                this.dropzone.addEventListener('click', () => this.fileUpload.click());
+                this.dropzone.addEventListener('dragover', (e) => { e.preventDefault(); this.dropzone.classList.add('border-fuchsia-500', 'bg-violet-900/50'); });
+                this.dropzone.addEventListener('dragleave', () => { this.dropzone.classList.remove('border-fuchsia-500', 'bg-violet-900/50'); });
+                this.dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.dropzone.classList.remove('border-fuchsia-500', 'bg-violet-900/50');
+                    if (e.dataTransfer.files.length) this.handleFile(e.dataTransfer.files[0]);
+                });
+                this.fileUpload.addEventListener('change', (e) => { if (e.target.files.length) this.handleFile(e.target.files[0]); });
+                this.imageUrlInput.addEventListener('input', () => {
+                    if (this.imageUrlInput.value.trim() !== '') {
+                        this.clearFileState();
+                        this.updateProcessButtonState(true);
+                    } else {
+                        this.updateProcessButtonState(false);
+                    }
+                });
+                this.processBtn.addEventListener('click', () => this.processInput());
+                this.copyBtn.addEventListener('click', () => this.copyToClipboard());
+                document.addEventListener('keydown', (e) => {
+                    if (document.getElementById('content-ocr').classList.contains('active') && e.key === 'Enter' && !this.processBtn.disabled) {
+                        e.preventDefault();
+                        this.processInput();
+                    }
+                });
+            },
+            updateProcessButtonState(isReady) {
+                this.processBtn.disabled = !isReady;
+                this.processBtn.classList.toggle('ready-to-process', isReady);
+            },
+            clearFileState() {
+                this.currentFile = null;
+                this.fileUpload.value = '';
+                this.fileNameEl.textContent = '';
+                this.dropzone.classList.remove('file-uploaded');
+                this.imageUrlInput.disabled = false;
+            },
+            clearUrlState() {
+                this.imageUrlInput.value = '';
+                this.fileUpload.disabled = false;
+            },
+            handleFile(file) {
+                if (!file.type.startsWith('image/') && file.type !== 'application/pdf') {
+                    this.fileNameEl.textContent = "Invalid file type.";
+                    this.currentFile = null;
+                    this.updateProcessButtonState(false);
+                    return;
+                }
+                this.clearUrlState();
+                this.currentFile = file;
+                this.fileNameEl.textContent = file.name;
+                this.imageUrlInput.disabled = true;
+                this.dropzone.classList.add('file-uploaded');
+                this.updateProcessButtonState(true);
+            },
+            setLoading(isLoading) {
+                this.processBtn.disabled = isLoading;
+                this.processBtn.querySelector('.btnText').style.display = isLoading ? 'none' : 'inline';
+                this.processBtn.querySelector('.loader').style.display = isLoading ? 'block' : 'none';
+                if (isLoading) {
+                    this.processBtn.classList.remove('ready-to-process');
+                    this.statusEl.textContent = 'Initializing...';
+                    this.jsonOutputEl.innerHTML = '<span class="text-violet-500">Processing...</span>';
+                    this.copyBtn.disabled = true;
+                } else {
+                    this.updateProcessButtonState(false);
+                    this.clearFileState();
+                    this.clearUrlState();
+                }
+            },
+            async processInput() {
+                const imageUrl = this.imageUrlInput.value.trim();
+                if (!this.currentFile && !imageUrl) {
+                    this.statusEl.textContent = 'Please upload a file or provide an image URL.';
+                    return;
+                }
+                this.setLoading(true);
+                try {
+                    let pagesContent = [];
+                     if (this.currentFile) {
+                        pagesContent = (this.currentFile.type === 'application/pdf')
+                            ? await this.processPdf(this.currentFile)
+                            : [await this.processImage(this.currentFile)];
+                    } else {
+                        pagesContent = [await this.processImage(imageUrl)];
+                    }
+                    const formattedPages = pagesContent.map(pageText => this.formatExtractedData(pageText));
+                    this.processedDataForCopy = formattedPages;
+                    const displayData = formattedPages.length === 1 ? formattedPages[0] : formattedPages;
+                    this.jsonOutputEl.innerHTML = this.syntaxHighlight(JSON.stringify(displayData, null, 2));
+                    this.copyBtn.disabled = false;
+                    this.statusEl.textContent = 'Extraction Complete!';
+                } catch (error) {
+                    console.error("OCR Error:", error);
+                    this.statusEl.textContent = 'Error during processing.';
+                } finally {
+                    this.setLoading(false);
+                }
+            },
+            async processImage(imageSource) {
+                const { data } = await Tesseract.recognize(imageSource, 'eng', { logger: m => this.statusEl.textContent = `${m.status}: ${Math.round(m.progress * 100)}%` });
+                return data.text;
+            },
+            async processPdf(file) {
+                const fileReader = new FileReader();
+                return new Promise((resolve, reject) => {
+                    fileReader.onload = async () => {
+                        try {
+                            const pdf = await pdfjsLib.getDocument(new Uint8Array(fileReader.result)).promise;
+                            let allPagesText = [];
+                            for (let i = 1; i <= pdf.numPages; i++) {
+                                this.statusEl.textContent = `Rendering page ${i}/${pdf.numPages}...`;
+                                const page = await pdf.getPage(i);
+                                const viewport = page.getViewport({ scale: 2.0 });
+                                const canvas = document.createElement('canvas');
+                                const context = canvas.getContext('2d');
+                                canvas.height = viewport.height;
+                                canvas.width = viewport.width;
+                                await page.render({ canvasContext: context, viewport: viewport }).promise;
+                                const pageText = await this.processImage(canvas.toDataURL('image/png'));
+                                allPagesText.push(pageText);
+                            }
+                            resolve(allPagesText);
+                        } catch (err) { reject(err); }
+                    };
+                    fileReader.readAsArrayBuffer(file);
+                });
+            },
+            formatExtractedData(text) {
+                const data = {};
+                let cleanedText = text.replace(/(\w)you(\w)/g, '$1 you $2').replace(/Failure-to-?file/gi, 'Failure-to-file').replace(/Failure-to-?pay/gi, 'Failure-to-pay').replace(/[~_]+/g, '');
+                let remainingText = cleanedText;
+                const noticeDetails = {};
+                const noticeRules = [
+                    { key: 'Notice Identifier', regex: /Notice\s+(CP\w+)/i }, { key: 'Tax Year', regex: /Tax year\s+(\d{4})/i },
+                    { key: 'Notice Date', regex: /Notice date\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})/i }, { key: 'Social Security Number', regex: /Social security number\s+([n\d-]+)/i },
+                    { key: 'Contact Phone', regex: /To contact us\s+([\d-]+(?:\s+EXT\.\s+\w+)?)/i }, { key: 'Caller ID', regex: /Your caller ID\s+([a-z0-9]+)/i },
+                    { key: 'Page', regex: /Page\s+(\d+\s+of\s+\d+)/i }, { key: 'Notice Identifier', regex: /Notice identifier\s+([A-Z0-9]+)/i },
+                ];
+                noticeRules.forEach(rule => {
+                    if (!noticeDetails[rule.key]) {
+                        const match = remainingText.match(rule.regex);
+                        if (match && match[1]) {
+                            noticeDetails[rule.key] = match[1].trim();
+                            remainingText = remainingText.replace(match[0], '');
+                        }
+                    }
+                });
+                if (Object.keys(noticeDetails).length > 0) data['Notice Details'] = noticeDetails;
+                const recipientInfo = {};
+                const recipientRules = [
+                    { key: 'Recipient Name', regex: /^([A-Z\s,.]+Q\.[A-Z\s,.]+)/m },
+                    { key: 'Recipient Address', regex: /\d{2,}\s+[A-Z\s,.]+\n[A-Z\s,.]+\s+[A-Z]{2}\s+\d{5}-\d{4}/m },
+                ];
+                recipientRules.forEach(rule => {
                     const match = remainingText.match(rule.regex);
-                    if (match && match[1]) {
-                        noticeDetails[rule.key] = match[1].trim();
+                    if (match) {
+                        const value = (match[1] || match[0]).trim().replace(/\n/g, ', ');
+                        if (!Object.values(recipientInfo).includes(value)) recipientInfo[rule.key] = value;
                         remainingText = remainingText.replace(match[0], '');
                     }
-                }
-            });
-            if (Object.keys(noticeDetails).length > 0) {
-                data['Notice Details'] = noticeDetails;
-            }
-
-            const recipientInfo = {};
-            const recipientRules = [
-                 { key: 'Recipient Name', regex: /^([A-Z\s,.]+Q\.[A-Z\s,.]+)/m },
-                 { key: 'Recipient Address', regex: /\d{2,}\s+[A-Z\s,.]+\n[A-Z\s,.]+\s+[A-Z]{2}\s+\d{5}-\d{4}/m },
-            ];
-            recipientRules.forEach(rule => {
-                const match = remainingText.match(rule.regex);
-                if (match) {
-                    const value = (match[1] || match[0]).trim().replace(/\n/g, ', ');
-                    if (!Object.values(recipientInfo).includes(value)) {
-                       recipientInfo[rule.key] = value;
-                    }
-                    remainingText = remainingText.replace(match[0], '');
-                }
-            });
-             if (Object.keys(recipientInfo).length > 0) {
-                data['Recipient Info'] = recipientInfo;
-            }
-
-            const billingSummary = {};
-            const billingBlockRegex = /Billing Summary([\s\S]*?)(?=Amount due by|What you need to do|If you agree)/m;
-            const billingBlockMatch = remainingText.match(billingBlockRegex);
-            if (billingBlockMatch && billingBlockMatch[1]) {
-                const billingText = billingBlockMatch[1];
-                const billingLineRegex = /^(Tax you owed|Payments you made|Failure-to-file penalty|Failure-to-pay penalty|Interest charges)\s+(-?\$?[\d,.]+\.\d{2})/gm;
-                let lineMatch;
-                while ((lineMatch = billingLineRegex.exec(billingText)) !== null) {
-                    billingSummary[lineMatch[1].trim()] = lineMatch[2].trim();
-                }
-                if (Object.keys(billingSummary).length > 0) {
-                    data['Billing Summary'] = billingSummary;
-                    remainingText = remainingText.replace(billingBlockMatch[0], '');
-                }
-            }
-
-            const amountDueRule = { key: 'Amount Due', regex: /(?:Amount due|Amount due by.*?)\s+(\$ ?[\d,.]+\.\d{2})/gi };
-            const amountMatches = cleanedText.match(amountDueRule.regex);
-            if (amountMatches) {
-                const uniqueAmounts = [...new Set(amountMatches.map(m => m.match(/\$?[\d,.]+\.\d{2}/)[0]))];
-                data['Amount Due'] = uniqueAmounts;
-                amountMatches.forEach(fullMatchStr => {
-                    remainingText = remainingText.replace(fullMatchStr, '');
                 });
-            }
-            const dueDateRule = { key: 'Due Date', regex: /Amount due by\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})/i };
-            const dueDateMatch = remainingText.match(dueDateRule);
-            if (dueDateMatch && dueDateMatch[1]) {
-                data[dueDateRule.key] = dueDateMatch[1].trim();
-                remainingText = remainingText.replace(dueDateMatch[0], '');
-            }
-
-            const junkPatterns = [
-                /eet eee/, /RARER SRR/, /OTANUED ON DECK/, /^\s*e\s/, /^\d{4}\s\d{7}\s\d{10}\s\d{4}$/
-            ];
-            const otherInfo = remainingText
-                .split('\n')
-                .map(line => line.trim())
-                .filter(line => {
-                    if (line.length < 5) return false;
-                    if (/^\s*$/.test(line)) return false;
+                if (Object.keys(recipientInfo).length > 0) data['Recipient Info'] = recipientInfo;
+                const billingSummary = {};
+                const billingBlockRegex = /Billing Summary([\s\S]*?)(?=Amount due by|What you need to do|If you agree)/m;
+                const billingBlockMatch = remainingText.match(billingBlockRegex);
+                if (billingBlockMatch && billingBlockMatch[1]) {
+                    const billingText = billingBlockMatch[1];
+                    const billingLineRegex = /^(Tax you owed|Payments you made|Failure-to-file penalty|Failure-to-pay penalty|Interest charges)\s+(-?\$?[\d,.]+\.\d{2})/gm;
+                    let lineMatch;
+                    while ((lineMatch = billingLineRegex.exec(billingText)) !== null) billingSummary[lineMatch[1].trim()] = lineMatch[2].trim();
+                    if (Object.keys(billingSummary).length > 0) {
+                        data['Billing Summary'] = billingSummary;
+                        remainingText = remainingText.replace(billingBlockMatch[0], '');
+                    }
+                }
+                const amountDueRule = { key: 'Amount Due', regex: /(?:Amount due|Amount due by.*?)\s+(\$ ?[\d,.]+\.\d{2})/gi };
+                const amountMatches = cleanedText.match(amountDueRule);
+                if (amountMatches) {
+                    // FIX: Add a check to ensure the inner match is not null
+                    const uniqueAmounts = [...new Set(
+                        amountMatches
+                            .map(m => m.match(/\$?[\d,.]+\.\d{2}/))
+                            .filter(match => match !== null)
+                            .map(match => match[0])
+                    )];
+                    data['Amount Due'] = uniqueAmounts;
+                    amountMatches.forEach(fullMatchStr => { remainingText = remainingText.replace(fullMatchStr, ''); });
+                }
+                const dueDateRule = { key: 'Due Date', regex: /Amount due by\s+([A-Za-z]+\s+\d{1,2},\s+\d{4})/i };
+                const dueDateMatch = remainingText.match(dueDateRule);
+                if (dueDateMatch && dueDateMatch[1]) {
+                    data[dueDateRule.key] = dueDateMatch[1].trim();
+                    remainingText = remainingText.replace(dueDateMatch[0], '');
+                }
+                const junkPatterns = [/eet eee/, /RARER SRR/, /OTANUED ON DECK/, /^\s*e\s/, /^\d{4}\s\d{7}\s\d{10}\s\d{4}$/];
+                const otherInfo = remainingText.split('\n').map(line => line.trim()).filter(line => {
+                    if (line.length < 5 || /^\s*$/.test(line)) return false;
                     if (Object.values(noticeDetails).some(val => line.includes(val))) return false;
                     if (Object.values(recipientInfo).some(val => line.includes(val.split(',')[0]))) return false;
                     if (junkPatterns.some(pattern => pattern.test(line))) return false;
                     return true;
                 });
-
-            if (otherInfo.length > 0) {
-                data['Other Information'] = otherInfo;
-            }
-
-            return data;
-        }
-
-        async function processInput() {
-            const imageUrl = imageUrlInput.value.trim();
-            if (!currentFile && !imageUrl) {
-                statusEl.textContent = 'Please upload a file or provide an image URL.';
-                statusEl.classList.add('text-red-400');
-                return;
-            }
-            statusEl.classList.remove('text-red-400');
-            setLoading(true);
-
-            try {
-                let pagesContent = [];
-                if (currentFile) {
-                    pagesContent = (currentFile.type === 'application/pdf')
-                        ? await processPdf(currentFile)
-                        : [await processImage(currentFile)];
-                } else {
-                    pagesContent = [await processImage(imageUrlInput.value.trim())];
+                if (otherInfo.length > 0) data['Other Information'] = otherInfo;
+                return data;
+            },
+            syntaxHighlight(json) {
+                if (!json) return '';
+                json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                    let cls = 'json-number';
+                    if (/^"/.test(match)) { cls = /:$/.test(match) ? 'json-key' : 'json-string'; }
+                    return '<span class="' + cls + '">' + match + '</span>';
+                });
+            },
+            copyToClipboard() {
+                let textToCopy = '';
+                this.processedDataForCopy.forEach((pageData, index) => {
+                    if (this.processedDataForCopy.length > 1) textToCopy += `--- Page ${index + 1} ---\n`;
+                    const keyOrder = ['Notice Details', 'Recipient Info', 'Billing Summary', 'Amount Due', 'Due Date', 'Other Information'];
+                    keyOrder.forEach(key => {
+                        if (pageData[key]) {
+                            const value = pageData[key];
+                            if (Array.isArray(value)) {
+                                textToCopy += `${key}: ${value.join(', ')}\n`;
+                            } else if (typeof value === 'object' && value !== null) {
+                                textToCopy += `${key}:\n`;
+                                for (const [subKey, subValue] of Object.entries(value)) textToCopy += `  ${subKey}: ${subValue}\n`;
+                            } else {
+                                textToCopy += `${key}: ${value}\n`;
+                            }
+                        }
+                    });
+                    if (this.processedDataForCopy.length > 1) textToCopy += `\n`;
+                });
+                const textArea = document.createElement('textarea');
+                textArea.value = textToCopy.trim();
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    this.statusEl.textContent = 'Formatted text copied to clipboard!';
+                } catch (err) {
+                    this.statusEl.textContent = 'Failed to copy.';
                 }
-                
-                const formattedPages = pagesContent.map(pageText => formatExtractedData(pageText));
-                processedDataForCopy = formattedPages;
-                
-                const displayData = formattedPages.length === 1 ? formattedPages[0] : formattedPages;
-                
-                const jsonString = JSON.stringify(displayData, null, 2);
-                jsonOutputEl.innerHTML = syntaxHighlight(jsonString);
-                copyBtn.disabled = false;
-
-                statusEl.textContent = 'Extraction Complete!';
-                statusEl.classList.add('text-fuchsia-400');
-
-            } catch (error) {
-                console.error(error);
-                statusEl.textContent = 'Error during processing. Check console for details.';
-                statusEl.classList.add('text-red-400');
-                jsonOutputEl.innerHTML = `<span class="text-red-400">Failed to process file. The document format might not be supported by the parser.</span>`;
-            } finally {
-                setLoading(false);
+                document.body.removeChild(textArea);
             }
-        }
+        };
+        ocrTool.init();
 
-        async function processImage(imageSource) {
-            const { data } = await Tesseract.recognize(imageSource, 'eng');
-            return data.text;
-        }
+        // --- CONVERTER TOOL ---
+        const converterTool = {
+            statusEl: document.getElementById('status-converter'),
+            outputEl: document.getElementById('converter-output'),
+            img2pdf: {
+                fileUpload: document.getElementById('fileUpload-img2pdf'),
+                processBtn: document.getElementById('processBtn-img2pdf'),
+                dropzone: document.getElementById('dropzone-img2pdf'),
+                fileNameEl: document.getElementById('fileName-img2pdf'),
+                currentFile: null,
+            },
+            pdf2img: {
+                fileUpload: document.getElementById('fileUpload-pdf2img'),
+                processBtn: document.getElementById('processBtn-pdf2img'),
+                dropzone: document.getElementById('dropzone-pdf2img'),
+                fileNameEl: document.getElementById('fileName-pdf2img'),
+                currentFile: null,
+            },
 
-        async function processPdf(file) {
-             const fileReader = new FileReader();
-            
-            return new Promise((resolve, reject) => {
+            init() {
+                // Image to PDF listeners
+                this.img2pdf.dropzone.addEventListener('click', () => this.img2pdf.fileUpload.click());
+                this.img2pdf.fileUpload.addEventListener('change', (e) => this.handleFile(e.target.files[0], 'img2pdf'));
+                this.img2pdf.dropzone.addEventListener('dragover', (e) => { e.preventDefault(); this.img2pdf.dropzone.classList.add('border-fuchsia-500'); });
+                this.img2pdf.dropzone.addEventListener('dragleave', () => this.img2pdf.dropzone.classList.remove('border-fuchsia-500'));
+                this.img2pdf.dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.img2pdf.dropzone.classList.remove('border-fuchsia-500');
+                    if (e.dataTransfer.files.length) this.handleFile(e.dataTransfer.files[0], 'img2pdf');
+                });
+                this.img2pdf.processBtn.addEventListener('click', () => this.convertImageToPdf());
+
+                // PDF to Image listeners
+                this.pdf2img.dropzone.addEventListener('click', () => this.pdf2img.fileUpload.click());
+                this.pdf2img.fileUpload.addEventListener('change', (e) => this.handleFile(e.target.files[0], 'pdf2img'));
+                this.pdf2img.dropzone.addEventListener('dragover', (e) => { e.preventDefault(); this.pdf2img.dropzone.classList.add('border-fuchsia-500'); });
+                this.pdf2img.dropzone.addEventListener('dragleave', () => this.pdf2img.dropzone.classList.remove('border-fuchsia-500'));
+                this.pdf2img.dropzone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    this.pdf2img.dropzone.classList.remove('border-fuchsia-500');
+                    if (e.dataTransfer.files.length) this.handleFile(e.dataTransfer.files[0], 'pdf2img');
+                });
+                this.pdf2img.processBtn.addEventListener('click', () => this.convertPdfToImages());
+            },
+
+            handleFile(file, type) {
+                const tool = this[type];
+                tool.currentFile = file;
+                tool.fileNameEl.textContent = file.name;
+                tool.dropzone.classList.add('file-uploaded');
+                tool.processBtn.disabled = false;
+                tool.processBtn.classList.add('ready-to-process');
+                this.outputEl.innerHTML = '';
+                this.statusEl.textContent = '';
+            },
+
+            setLoading(isLoading, toolType) {
+                const tool = this[toolType];
+                tool.processBtn.disabled = isLoading;
+                tool.processBtn.querySelector('.btnText').style.display = isLoading ? 'none' : 'inline';
+                tool.processBtn.querySelector('.loader').style.display = isLoading ? 'block' : 'none';
+                if (!isLoading) {
+                    tool.processBtn.classList.remove('ready-to-process');
+                    tool.dropzone.classList.remove('file-uploaded');
+                    tool.fileNameEl.textContent = '';
+                    tool.currentFile = null;
+                }
+            },
+
+            async convertImageToPdf() {
+                if (!this.img2pdf.currentFile) return;
+                this.setLoading(true, 'img2pdf');
+                this.statusEl.textContent = 'Converting image to PDF...';
+
+                try {
+                    const { PDFDocument } = PDFLib;
+                    const pdfDoc = await PDFDocument.create();
+                    const imageBytes = await this.img2pdf.currentFile.arrayBuffer();
+                    
+                    let image;
+                    if (this.img2pdf.currentFile.type === 'image/png') {
+                        image = await pdfDoc.embedPng(imageBytes);
+                    } else {
+                        image = await pdfDoc.embedJpg(imageBytes);
+                    }
+
+                    const page = pdfDoc.addPage([image.width, image.height]);
+                    page.drawImage(image, { x: 0, y: 0, width: image.width, height: image.height });
+
+                    const pdfBytes = await pdfDoc.save();
+                    this.download(pdfBytes, this.img2pdf.currentFile.name.replace(/\.[^/.]+$/, "") + ".pdf", "application/pdf");
+                    this.statusEl.textContent = 'Conversion successful!';
+                } catch (error) {
+                    console.error("Image to PDF Error:", error);
+                    this.statusEl.textContent = 'Conversion failed. Please use a standard JPG/PNG.';
+                } finally {
+                    this.setLoading(false, 'img2pdf');
+                }
+            },
+
+            async convertPdfToImages() {
+                if (!this.pdf2img.currentFile) return;
+                this.setLoading(true, 'pdf2img');
+                this.outputEl.innerHTML = '';
+
+                const fileReader = new FileReader();
                 fileReader.onload = async () => {
                     try {
-                        const typedarray = new Uint8Array(fileReader.result);
-                        const pdf = await pdfjsLib.getDocument(typedarray).promise;
-                        let allPagesText = [];
-
+                        const pdf = await pdfjsLib.getDocument(new Uint8Array(fileReader.result)).promise;
                         for (let i = 1; i <= pdf.numPages; i++) {
-                            statusEl.textContent = `Rendering page ${i} of ${pdf.numPages}...`;
+                            this.statusEl.textContent = `Converting page ${i} of ${pdf.numPages}...`;
                             const page = await pdf.getPage(i);
-                            const viewport = page.getViewport({ scale: 2.0 });
-                            
+                            const viewport = page.getViewport({ scale: 1.5 });
                             const canvas = document.createElement('canvas');
                             const context = canvas.getContext('2d');
                             canvas.height = viewport.height;
                             canvas.width = viewport.width;
-                            
                             await page.render({ canvasContext: context, viewport: viewport }).promise;
-                            
-                            statusEl.textContent = `Page ${i}/${pdf.numPages}: Recognizing text...`;
-                            const { data } = await Tesseract.recognize(canvas.toDataURL('image/png'), 'eng');
-                            allPagesText.push(data.text);
-                        }
-                        resolve(allPagesText);
-                    } catch (error) { reject(error); }
-                };
-                fileReader.onerror = reject;
-                fileReader.readAsArrayBuffer(file);
-            });
-        }
 
-        function syntaxHighlight(json) {
-            if (!json) return '';
-            json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-            return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
-                let cls = 'json-number';
-                if (/^"/.test(match)) {
-                    cls = /:$/.test(match) ? 'json-key' : 'json-string';
-                }
-                return '<span class="' + cls + '">' + match + '</span>';
-            });
-        }
-
-        function copyToClipboard() {
-            let textToCopy = '';
-            processedDataForCopy.forEach((pageData, index) => {
-                if(processedDataForCopy.length > 1) {
-                    textToCopy += `--- Page ${index + 1} ---\n`;
-                }
-                const keyOrder = ['Notice Details', 'Recipient Info', 'Billing Summary', 'Amount Due', 'Due Date', 'Other Information'];
-                keyOrder.forEach(key => {
-                    if (pageData[key]) {
-                        const value = pageData[key];
-                        if (Array.isArray(value)) {
-                            textToCopy += `${key}: ${value.join(', ')}\n`;
-                        } else if (typeof value === 'object' && value !== null) {
-                            textToCopy += `${key}:\n`;
-                            for (const [subKey, subValue] of Object.entries(value)) {
-                                textToCopy += `  ${subKey}: ${subValue}\n`;
-                            }
-                        } else {
-                            textToCopy += `${key}: ${value}\n`;
+                            const imgData = canvas.toDataURL('image/png');
+                            const imgContainer = document.createElement('div');
+                            imgContainer.className = 'relative group';
+                            const img = document.createElement('img');
+                            img.src = imgData;
+                            img.className = 'w-full h-auto rounded-lg shadow-lg';
+                            const downloadBtn = document.createElement('a');
+                            downloadBtn.href = imgData;
+                            downloadBtn.download = `${this.pdf2img.currentFile.name.replace('.pdf', '')}-page-${i}.png`;
+                            downloadBtn.className = 'absolute bottom-2 right-2 bg-fuchsia-500 text-white p-2 rounded-full opacity-0 group-hover:opacity-100 transition-opacity';
+                            downloadBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>';
+                            imgContainer.appendChild(img);
+                            imgContainer.appendChild(downloadBtn);
+                            this.outputEl.appendChild(imgContainer);
                         }
+                        this.statusEl.textContent = 'Conversion successful! Hover over images to download.';
+                    } catch (error) {
+                        console.error("PDF to Image Error:", error);
+                        this.statusEl.textContent = 'Conversion failed.';
+                    } finally {
+                        this.setLoading(false, 'pdf2img');
                     }
-                });
-                 if(processedDataForCopy.length > 1) {
-                    textToCopy += `\n`;
-                }
-            });
-
-            const textArea = document.createElement('textarea');
-            textArea.value = textToCopy.trim();
-            textArea.style.position = 'fixed';
-            textArea.style.left = '-9999px';
-            document.body.appendChild(textArea);
-            textArea.select();
-            try {
-                document.execCommand('copy');
-                statusEl.textContent = 'Formatted text copied to clipboard!';
-            } catch (err) {
-                statusEl.textContent = 'Failed to copy.';
+                };
+                fileReader.readAsArrayBuffer(this.pdf2img.currentFile);
+            },
+            
+            download(data, filename, type) {
+                const blob = new Blob([data], { type: type });
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.style.display = "none";
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                window.URL.revokeObjectURL(url);
+                document.body.removeChild(a);
             }
-            document.body.removeChild(textArea);
-        }
+        };
+        converterTool.init();
     </script>
 </body>
 </html>
